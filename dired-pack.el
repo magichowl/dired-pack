@@ -324,6 +324,6 @@ file out of its contents.
 	     (define-key dired-mode-map "T" 'dired-pack-unpack))))	    
 
 
-(provide 'dired-tar)
+(provide 'dired-pack)
 
 ;;; dired-tar.el ends here
