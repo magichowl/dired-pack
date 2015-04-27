@@ -14,7 +14,7 @@
 ;;; dired-tar adds a command to dired-mode for creating and unpacking
 ;;; tar files.  When using this package, typing `T' on a tar file in a
 ;;; dired listing unpacks the tar file, uncompressing it if necessary.
-;;; Typing `T' on a directory packs up that directory into a gzipped
+;;; Typing `T' on a file/directory packs up that file/directory into a gzipped
 ;;; tar file named DIRNAME.tar.gz.
 ;;;
 ;;; To use this package, just place it in a directory in your Emacs
@@ -26,7 +26,7 @@
 ;;;
 ;;; dired-tar-pack-unpack - If the file on the current line is a tar
 ;;;    file, or a gzipped or compressed tar file, unpack it.  If the
-;;;    file on the current line is a directory, build a tar file for
+;;;    file on the current line is a file/directory, build a tar file for
 ;;;    it, and gzip it.
 ;;;
 ;;; It also declares the following variables:
@@ -278,26 +278,24 @@ unpacking it."
 (defun dired-tar-pack-unpack (prefix-arg)
   "Create or unpack a tar archive for the file on the current line.
 
-If the file on the current line is a directory, make a gzipped tar
-file out of its contents.
-
 If the file on the current line is a tar archive, unpack it.  If the
 archive appears to be gzipped or compressed, expand it first.  With a
 prefix argument, just list the tar archive's contents, and don't
 unpack it.  The file's name must end in \".tar\", \".tar.gz\", or
-\".tar.Z\" or else this command will assume it's not a tar file."
+\".tar.Z\" or else this command will assume it's not a tar file.
+
+Otherwise, make a gzipped tar
+file out of its contents.
+"
   (interactive "P")
 
   (let ((filename (dired-get-filename)))
     (cond
-     ((file-directory-p filename)
-      (dired-tar-pack filename prefix-arg))
-
      ((string-match dired-tar-tarfile-regexp filename)
       (dired-tar-unpack filename prefix-arg))
 
      (t
-      (error "%s is neither a tar file nor a directory" filename)))))
+      (dired-tar-pack filename prefix-arg)))))
 
 
 ;;;; Hooking this into dired mode.
