@@ -1,4 +1,4 @@
-;;;; dired-tar.el - extensions to dired to create and unpack tar files.
+;;;; dired-pack.el - extensions to dired to pack and unpack files.
 ;;;; Jim Blandy <jimb@cyclic.com> --- June 1995
 ;;;; Copyright (C) 1995 Jim Blandy
 
@@ -11,28 +11,27 @@
 
 ;;; Commentary:
 
-;;; dired-tar adds a command to dired-mode for creating and unpacking
-;;; tar files.  When using this package, typing `T' on a tar file in a
-;;; dired listing unpacks the tar file, uncompressing it if necessary.
+;;; dired-pack adds a command to dired-mode for packing and unpacking
+;;; files.  When using this package, typing `T' on a file in a
+;;; dired listing unpacks the file, unpacking it if necessary.
 ;;; Typing `T' on a file/directory packs up that file/directory into a gzipped
-;;; tar file named DIRNAME.tar.gz.
+;;; tar file named DIRNAME.tgz.
 ;;;
 ;;; To use this package, just place it in a directory in your Emacs
 ;;; lisp load path, byte-compile it, and put the line
-;;;    (require 'dired-tar)
+;;;    (require 'dired-pack)
 ;;; in your .emacs.
 ;;;
 ;;; This file defines the following function:
 ;;;
-;;; dired-tar-pack-unpack - If the file on the current line is a tar
-;;;    file, or a gzipped or compressed tar file, unpack it.  If the
-;;;    file on the current line is a file/directory, build a tar file for
-;;;    it, and gzip it.
+;;; dired-pack-unpack - If the file on the current line is a
+;;;    packed file, unpack it.  If the
+;;;    file on the current line is a file/directory, compress it.
 ;;;
 ;;; It also declares the following variables:
 ;;;
-;;; dired-tar-should-gzip - if t, dired-tar-pack gzips the tar files
-;;;	it creates.  If nil, dired-tar-pack leaves the tars alone.
+;;; dired-tar-should-gzip - if t, dired-pack gzips the tar files
+;;;	it creates.  If nil, dired-pack leaves the tars alone.
 ;;;
 ;;; dired-tar-command-switches - flags to pass to the tar program.
 ;;;      This is concatenated with command characters ("x" or "c" or
@@ -40,7 +39,7 @@
 ;;;      should use "mvf".
 ;;;
 ;;; dired-tar-gzip-extension - extension to use for gzipped tar files.
-;;;      Defaults to ".tar.gz", but ".tgz" may be a useful value in
+;;;      Defaults to ".tgz", but ".tar.gz" may be a standard value in
 ;;;      some circumstances.
 ;;;
 ;;; dired-tar-gzip-command - a shell command which gzips its
@@ -57,9 +56,9 @@
 
 ;;; Changes since 1.6:
 ;;; - recognize files with extension .tgz as gzipped tarfiles; let user
-;;;   configure what we name compressed tar files we create.
+;;;   configure what we name compressed files we create.
 ;;; Changes since 1.5:
-;;; - (dired-tar-pack): Changes from Cord Kielhorn: name files correctly
+;;; - (dired-pack): Changes from Cord Kielhorn: name files correctly
 ;;;   when dired-tar-should-gzip is false.
 ;;;
 ;;; Changes since 1.4:
@@ -73,14 +72,17 @@
 
 ;;;; Variables.
 (defvar dired-tar-should-gzip t
-  "*t if dired-tar-pack-unpack should gzip the files it creates, by default.
+  "*t if dired-pack-unpack should gzip the files it creates, by default.
 nil if it should leave them alone.")
 
-(defvar dired-tar-gzip-extension ".tar.gz"
+(defvar dired-pack-extension ".tgz"
   "*File name extension to use for gzipped tar files.
-By default, this is \".tar.gz\", but some people may like to use \".tgz\".")
+By default, this is \".tgz\", but some people may like to use \".tar.gz\".")
 
 (defvar dired-tar-gzip-command "gzip --best --stdout"
+  "*A shell command which gzips its standard input to its standard output.")
+
+(defvar dired-pack-command "tar -czvf %s %s"
   "*A shell command which gzips its standard input to its standard output.")
 
 (defvar dired-tar-ungzip-command "gzip --decompress --stdout"
@@ -105,10 +107,12 @@ process, and holds the name of the file created or affected.  The
 process-termination sentinal uses this to update the dired listing
 when the process completes its work, or dies.")
 
+(defvar dired-pack-with-7za 'nil
+  "Default compression function is set to \"tar\", if this variable is true, use \"7za\".")
 
 ;;;; Internal functions.
 
-(defun dired-tar-run-command (command directory result)
+(defun dired-pack-run-command (command directory result)
   "Internal function for use by the dired-tar package.
 Run COMMAND asynchronously in its own window, like a compilation.
 Use DIRECTORY as the default directory for the command's execution.
@@ -193,7 +197,7 @@ update the dired listing by looking at dired-tar-result."
    ;; Otherwise, I guess the tar operation must have failed somehow.
    ))
 
-(defun dired-tar-pack (directory prefix-arg)
+(defun dired-pack (directory prefix-arg)
   "Internal function for use by the dired-tar package.
 Create a gzipped tar file from the contents of DIRECTORY.
 The archive is named after the directory, and the files are stored in
@@ -202,32 +206,26 @@ the archive with names relative to DIRECTORY's parent.
 We use `dired-tar-gzip-extension' as the suffix for the filenames we
 create.
 
-For example, (dired-tar-pack \"/home/blandy/womble/\") would produce a
+For example, (dired-pack \"/home/blandy/womble/\") would produce a
 tar file named \"/home/blandy/womble.tar.gz\", whose contents had
 names like \"womble/foo\", \"womble/bar\", etcetera.
 
 The second argument PREFIX-ARG is ignored."
   (let* ((dir-file (directory-file-name directory))
-	 (tar-file-name (if dired-tar-should-gzip
-			    (concat dir-file dired-tar-gzip-extension)
-			  (format "%s.tar" dir-file)))
-	 (parent-name (file-name-directory dir-file))
+	 (tar-file-name (concat dir-file dired-pack-extension))
+         (parent-name (file-name-directory dir-file))
 	 (content-name (file-name-nondirectory dir-file)))
-    (dired-tar-run-command (if dired-tar-should-gzip
-			       (format "tar cvf - %s | %s > %s"
-				       content-name
-				       dired-tar-gzip-command
-				       tar-file-name)
-			     (format "tar cvf %s %s"
-				     tar-file-name
-				     content-name))
-			   parent-name
-			   tar-file-name)))
+    (dired-pack-run-command
+     (format dired-pack-command
+             tar-file-name
+             content-name)
+     parent-name
+     tar-file-name)))
 
 (defconst dired-tar-tarfile-regexp
   (format "\\(%s\\)\\'"
 	  (mapconcat 'regexp-quote
-		     '(".tar" ".tar.z" ".tar.gz" ".tar.Z" ".tgz" ".rar" ".zip" ".7z")
+		     '(".tar$" ".tar.z$" ".tar.gz$" ".tar.Z$" ".tgz$" ".rar$" ".zip$" ".7z$")
 		     "\\|"))
   "Regular expression matching plausible filenames for tar files.")
 
@@ -236,9 +234,9 @@ The second argument PREFIX-ARG is ignored."
 	  (mapconcat 'regexp-quote
 		     '(".tar.z" ".tar.gz" ".tar.Z" ".tgz")
 		     "\\|"))
-  "Regular expression matching plausible filenames for compressed tar files.")
+  "Regular expression matching plausible filenames for compressed files.")
 
-(defun dired-tar-unpack (tar-file prefix-arg)
+(defun dired-unpack (tar-file prefix-arg)
   "Internal function for use by the dired-tar package.
 Unpack TAR-FILE into the directory containing it.
 If PREFIX-ARG is non-nil, just list the archive's contents without
@@ -246,19 +244,19 @@ unpacking it."
 
   (let ((tar-file-dir (file-name-directory tar-file))
 	(action (if prefix-arg "t" "x")))
-    (dired-tar-run-command
+    (dired-pack-run-command
      (cond
       ;; Does this look like a tar file at all?
       ((not (string-match dired-tar-tarfile-regexp tar-file))
        (error
-	"bug: dired-tar-unpack should only be passed tar file names."))
+	"bug: dired-unpack should only be passed tar file names."))
 
       ((string-match ".7z$" tar-file)
        (format "7za x %s  -r -o./" tar-file))
 
       ((string-match "\\(\\.zip$\\|\\.rar$\\)\\'" tar-file)
        (format "unar %s" tar-file))
-      ;; Does it look like a compressed tar file?
+      ;; Does it look like a compressed file?
       ((string-match dired-tar-gzipped-tarfile-regexp tar-file)
        (format "%s < %s | tar %s%s -"
 	       dired-tar-ungzip-command
@@ -266,7 +264,7 @@ unpacking it."
 	       action
 	       dired-tar-command-switches))
 
-      ;; Okay, then it must look like an uncompressed tar file.
+      ;; Okay, then it must look like an uncompressed file.
       (t
        (format "tar %svf %s" action tar-file)))
      tar-file-dir
@@ -279,7 +277,22 @@ unpacking it."
 ;;;; User-visible functions.
 
 ;;;###autoload
-(defun dired-tar-pack-unpack (prefix-arg)
+(defun dired-toggle-pack-function ()
+  (interactive)
+  (setq dired-pack-with-7za (not dired-pack-with-7za))
+  (if dired-pack-with-7za
+      (setq dired-pack-extension ".7z"
+            dired-pack-command "7za a -r %s %s")
+    (if dired-tar-should-gzip
+     (setq dired-pack-extension ".tgz"
+           dired-pack-command "tar -czvf %s %s")
+     (setq dired-pack-extension ".tar"
+           dired-pack-command "tar -cvf %s %s")
+     ))
+  )
+
+;;;###autoload
+(defun dired-pack-unpack (prefix-arg)
   "Create or unpack a tar archive for the file on the current line.
 
 If the file on the current line is a tar archive, unpack it.  If the
@@ -296,10 +309,10 @@ file out of its contents.
   (let ((filename (dired-get-filename)))
     (cond
      ((string-match dired-tar-tarfile-regexp filename)
-      (dired-tar-unpack filename prefix-arg))
+      (dired-unpack filename prefix-arg))
 
      (t
-      (dired-tar-pack filename prefix-arg)))))
+      (dired-pack filename prefix-arg)))))
 
 
 ;;;; Hooking this into dired mode.
@@ -308,7 +321,7 @@ file out of its contents.
 (add-hook 'dired-mode-hook
 	  (function
 	   (lambda ()
-	     (define-key dired-mode-map "T" 'dired-tar-pack-unpack))))	    
+	     (define-key dired-mode-map "T" 'dired-pack-unpack))))	    
 
 
 (provide 'dired-tar)
