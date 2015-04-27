@@ -227,7 +227,7 @@ The second argument PREFIX-ARG is ignored."
 (defconst dired-tar-tarfile-regexp
   (format "\\(%s\\)\\'"
 	  (mapconcat 'regexp-quote
-		     '(".tar" ".tar.z" ".tar.gz" ".tar.Z" ".tgz")
+		     '(".tar" ".tar.z" ".tar.gz" ".tar.Z" ".tgz" ".rar" ".zip" ".7z")
 		     "\\|"))
   "Regular expression matching plausible filenames for tar files.")
 
@@ -248,12 +248,16 @@ unpacking it."
 	(action (if prefix-arg "t" "x")))
     (dired-tar-run-command
      (cond
-
       ;; Does this look like a tar file at all?
       ((not (string-match dired-tar-tarfile-regexp tar-file))
        (error
 	"bug: dired-tar-unpack should only be passed tar file names."))
 
+      ((string-match ".7z$" tar-file)
+       (format "7za x %s  -r -o./" tar-file))
+
+      ((string-match "\\(\\.zip$\\|\\.rar$\\)\\'" tar-file)
+       (format "unar %s" tar-file))
       ;; Does it look like a compressed tar file?
       ((string-match dired-tar-gzipped-tarfile-regexp tar-file)
        (format "%s < %s | tar %s%s -"
