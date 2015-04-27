@@ -131,7 +131,7 @@ name of the directory into which the tar file was unpacked."
       (newline)
 
       (setq buffer-read-only t
-            mode-name "Tar-Output"
+            mode-name "Compilation"
             default-directory directory)
 
       (set (make-local-variable 'dired-pack-result)
@@ -223,17 +223,17 @@ The second argument PREFIX-ARG is ignored."
      tar-file-name)))
 
 (defconst dired-pack-regexp
-  (format "\\(%s\\)\\'"
+  (format "\\(%s$\\)\\'"
           (mapconcat 'regexp-quote
-                     '(".tar$" ".tar.z$" ".tar.gz$" ".tar.Z$" ".tgz$" ".rar$" ".zip$" ".7z$")
-                     "\\|"))
+                     '(".tar" ".tar.z" ".tar.gz" ".tar.Z" ".tgz" ".rar" ".zip" ".7z")
+                     "$\\|"))
   "Regular expression matching plausible filenames for tar files.")
 
 (defconst dired-tar-gzipped-tarfile-regexp
-  (format "\\(%s\\)\\'"
+  (format "\\(%s$\\)\\'"
           (mapconcat 'regexp-quote
                      '(".tar.z" ".tar.gz" ".tar.Z" ".tgz")
-                     "\\|"))
+                     "$\\|"))
   "Regular expression matching plausible filenames for compressed files.")
 
 (defun dired-unpack (tar-file prefix-arg)
