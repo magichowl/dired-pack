@@ -50,9 +50,9 @@
 ;;;
 ;;; dired-tar-shell-file-name - name of the shell to use to run the
 ;;;      tar command.  The default is /bin/sh, which should work for
-;;;	 all Unix users, better than your login shell; I'm told
-;;;	 Windows users may want to use "4NT", but I know nothing about
-;;;	 Windows.
+;;;      all Unix users, better than your login shell; I'm told
+;;;      Windows users may want to use "4NT", but I know nothing about
+;;;      Windows.
 
 ;;; Changes since 1.6:
 ;;; - recognize files with extension .tgz as gzipped tarfiles; let user
@@ -131,24 +131,24 @@ name of the directory into which the tar file was unpacked."
       (newline)
 
       (setq buffer-read-only t
-	    mode-name "Tar-Output"
-	    default-directory directory)
+            mode-name "Tar-Output"
+            default-directory directory)
 
       (set (make-local-variable 'dired-tar-result)
-	   result)
+           result)
       (set (make-local-variable 'mode-line-process)
-	   '(": %s"))
+           '(": %s"))
       (set (make-local-variable 'compilation-finish-function)
-	   'dired-tar-operation-done)
+           'dired-tar-operation-done)
 
       (let ((process
-	     ;; Chris Moore <Chris.Moore@src.bae.co.uk> says that the
-	     ;; tar commands barf using his version of the zsh.  We
-	     ;; don't need anything but the Bourne shell here; that's
-	     ;; the default value for dired-tar-shell-file-name.
-	     (let ((shell-file-name dired-tar-shell-file-name))
-	       (start-process-shell-command "*Tar*" buf command))))
-	(set-process-sentinel process 'compilation-sentinel))
+             ;; Chris Moore <Chris.Moore@src.bae.co.uk> says that the
+             ;; tar commands barf using his version of the zsh.  We
+             ;; don't need anything but the Bourne shell here; that's
+             ;; the default value for dired-tar-shell-file-name.
+             (let ((shell-file-name dired-tar-shell-file-name))
+               (start-process-shell-command "*Tar*" buf command))))
+        (set-process-sentinel process 'compilation-sentinel))
       (display-buffer buf))))
 
 (defun dired-tar-get-buffer ()
@@ -162,19 +162,19 @@ deleted."
   (let ((number 1))
     (while number
       (let* ((name (if (<= number 1) "*Tar*"
-		     (format "*Tar*<%d>" number)))
-	     (buf (get-buffer name)))
-	(if (null buf) (setq number nil)
-	  (save-excursion
-	    (set-buffer buf)
-	    (if (let ((process (get-buffer-process buf)))
-		  (not (and process (eq (process-status process) 'run))))
-		(kill-buffer buf)))
-	  (setq number (1+ number))))))
+                     (format "*Tar*<%d>" number)))
+             (buf (get-buffer name)))
+        (if (null buf) (setq number nil)
+          (save-excursion
+            (set-buffer buf)
+            (if (let ((process (get-buffer-process buf)))
+                  (not (and process (eq (process-status process) 'run))))
+                (kill-buffer buf)))
+          (setq number (1+ number))))))
 
   ;; Make us a fresh buffer.
   (generate-new-buffer "*Tar*"))
-	
+
 
 (defun dired-tar-operation-done (buf message)
   "Internal function for use by the dired-tar package.
@@ -187,8 +187,8 @@ update the dired listing by looking at dired-tar-result."
     (save-excursion
       (mapcar
        (function (lambda (buf)
-		   (set-buffer buf)
-		   (dired-revert)))
+                   (set-buffer buf)
+                   (dired-revert)))
        (dired-buffers-for-dir dired-tar-result))))
 
    ((file-exists-p dired-tar-result)
@@ -212,9 +212,9 @@ names like \"womble/foo\", \"womble/bar\", etcetera.
 
 The second argument PREFIX-ARG is ignored."
   (let* ((dir-file (directory-file-name directory))
-	 (tar-file-name (concat dir-file dired-pack-extension))
+         (tar-file-name (concat dir-file dired-pack-extension))
          (parent-name (file-name-directory dir-file))
-	 (content-name (file-name-nondirectory dir-file)))
+         (content-name (file-name-nondirectory dir-file)))
     (dired-pack-run-command
      (format dired-pack-command
              tar-file-name
@@ -224,16 +224,16 @@ The second argument PREFIX-ARG is ignored."
 
 (defconst dired-tar-tarfile-regexp
   (format "\\(%s\\)\\'"
-	  (mapconcat 'regexp-quote
-		     '(".tar$" ".tar.z$" ".tar.gz$" ".tar.Z$" ".tgz$" ".rar$" ".zip$" ".7z$")
-		     "\\|"))
+          (mapconcat 'regexp-quote
+                     '(".tar$" ".tar.z$" ".tar.gz$" ".tar.Z$" ".tgz$" ".rar$" ".zip$" ".7z$")
+                     "\\|"))
   "Regular expression matching plausible filenames for tar files.")
 
 (defconst dired-tar-gzipped-tarfile-regexp
   (format "\\(%s\\)\\'"
-	  (mapconcat 'regexp-quote
-		     '(".tar.z" ".tar.gz" ".tar.Z" ".tgz")
-		     "\\|"))
+          (mapconcat 'regexp-quote
+                     '(".tar.z" ".tar.gz" ".tar.Z" ".tgz")
+                     "\\|"))
   "Regular expression matching plausible filenames for compressed files.")
 
 (defun dired-unpack (tar-file prefix-arg)
@@ -243,13 +243,13 @@ If PREFIX-ARG is non-nil, just list the archive's contents without
 unpacking it."
 
   (let ((tar-file-dir (file-name-directory tar-file))
-	(action (if prefix-arg "t" "x")))
+        (action (if prefix-arg "t" "x")))
     (dired-pack-run-command
      (cond
       ;; Does this look like a tar file at all?
       ((not (string-match dired-tar-tarfile-regexp tar-file))
        (error
-	"bug: dired-unpack should only be passed tar file names."))
+        "bug: dired-unpack should only be passed tar file names."))
 
       ((string-match ".7z$" tar-file)
        (format "7za x %s  -r -o./" tar-file))
@@ -259,10 +259,10 @@ unpacking it."
       ;; Does it look like a compressed file?
       ((string-match dired-tar-gzipped-tarfile-regexp tar-file)
        (format "%s < %s | tar %s%s -"
-	       dired-tar-ungzip-command
-	       tar-file
-	       action
-	       dired-tar-command-switches))
+               dired-tar-ungzip-command
+               tar-file
+               action
+               dired-tar-command-switches))
 
       ;; Okay, then it must look like an uncompressed file.
       (t
@@ -319,9 +319,11 @@ file out of its contents.
 
 ;;;###autoload
 (add-hook 'dired-mode-hook
-	  (function
-	   (lambda ()
-	     (define-key dired-mode-map "T" 'dired-pack-unpack))))	    
+          (function
+           (lambda ()
+             (define-key dired-mode-map "z" 'dired-pack-unpack)
+             (define-key dired-mode-map "Z" 'dired-toggle-pack-function)
+             )))
 
 
 (provide 'dired-pack)
