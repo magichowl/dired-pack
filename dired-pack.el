@@ -225,7 +225,7 @@ The second argument PREFIX-ARG is ignored."
 (defconst dired-pack-regexp
   (format "\\(%s$\\)\\'"
           (mapconcat 'regexp-quote
-                     '(".tar" ".tar.z" ".tar.gz" ".tar.Z" ".tgz" ".rar" ".zip" ".7z")
+                     '(".tar" ".tar.z" ".tar.gz" ".tar.Z" ".tgz" ".tar.xz" ".txz" ".rar" ".zip" ".7z")
                      "$\\|"))
   "Regular expression matching plausible filenames for tar files.")
 
