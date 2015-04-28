@@ -1,12 +1,11 @@
 ;;;; dired-pack.el - extensions to dired to pack and unpack files.
-;;;; Jim Blandy <jimb@cyclic.com> --- June 1995
 ;;;; Copyright (C) 1995 Jim Blandy
 
 ;; Author: Jim Blandy <jimb@cyclic.com>
-;; Maintainer: Jim Blandy <jimb@cyclic.com>
+;; Maintainer: Pan, Senshan <pansenshan@aliyun.com>
 ;; Created: Mon  6 Sep 1993
-;; Updated: Mon 26 Aug 1996
-;; Version: 1.7
+;; Updated: Tue 28 Apr 2015
+;; Version: 1.8
 ;; Keywords: unix
 
 ;;; Commentary:
