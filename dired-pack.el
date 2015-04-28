@@ -246,27 +246,13 @@ unpacking it."
         (action (if prefix-arg "t" "x")))
     (dired-pack-run-command
      (cond
-      ;; Does this look like a tar file at all?
-      ((not (string-match dired-pack-regexp tar-file))
-       (error
-        "bug: dired-unpack should only be passed tar file names."))
-
-      ((string-match ".7z$" tar-file)
-       (format "7za x %s  -r -o./" tar-file))
-
-      ((string-match "\\(\\.zip$\\|\\.rar$\\)\\'" tar-file)
-       (format "unar %s" tar-file))
       ;; Does it look like a compressed file?
-      ((string-match dired-tar-gzipped-tarfile-regexp tar-file)
-       (format "%s < %s | tar %s%s -"
-               dired-tar-ungzip-command
-               tar-file
-               action
-               dired-tar-command-switches))
+      ((string-match dired-pack-regexp tar-file)
+       (format "unar %s" tar-file))
 
-      ;; Okay, then it must look like an uncompressed file.
       (t
-       (format "tar %svf %s" action tar-file)))
+       (error
+        "bug: dired-unpack should only be passed tar file names.")))
      tar-file-dir
 
      ;; If we're just unpacking the archive, don't bother updating the
