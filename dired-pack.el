@@ -81,7 +81,7 @@ By default, this is \".tgz\", but some people may like to use \".7z\".")
 (defvar dired-tar-gzip-command "gzip --best --stdout"
   "*A shell command which gzips its standard input to its standard output.")
 
-(defvar dired-pack-command "tar -czvf %s %s"
+(defvar dired-pack-command "tar -czvf \"%s\" \"%s\""
   "*A shell command which gzips its standard input to its standard output.")
 
 (defvar dired-tar-ungzip-command "gzip --decompress --stdout"
@@ -130,7 +130,7 @@ name of the directory into which the tar file was unpacked."
       (newline)
 
       (setq buffer-read-only t
-            mode-name "Compilation"
+            mode-name "Tar-Output"
             default-directory directory)
 
       (set (make-local-variable 'dired-pack-result)
@@ -247,7 +247,7 @@ unpacking it."
      (cond
       ;; Does it look like a compressed file?
       ((string-match dired-pack-regexp tar-file)
-       (format "unar %s" tar-file))
+       (format "unar \"%s\"" tar-file))
 
       (t
        (error
@@ -267,12 +267,12 @@ unpacking it."
   (setq dired-pack-with-7za (not dired-pack-with-7za))
   (if dired-pack-with-7za
       (setq dired-pack-extension ".7z"
-            dired-pack-command "7za a -r %s %s")
+            dired-pack-command "7za a -r \"%s\" \"%s\"")
     (if dired-tar-should-gzip
      (setq dired-pack-extension ".tgz"
-           dired-pack-command "tar -czvf %s %s")
+           dired-pack-command "tar -czvf \"%s\" \"%s\"")
      (setq dired-pack-extension ".tar"
-           dired-pack-command "tar -cvf %s %s")
+           dired-pack-command "tar -cvf \"%s\" \"%s\"")
      ))
   )
 
