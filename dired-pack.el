@@ -2,10 +2,10 @@
 ;;;; Copyright (C) 1995 Jim Blandy
 
 ;; Author: Jim Blandy <jimb@cyclic.com>
-;; Maintainer: Pan, Senshan <pansenshan@aliyun.com>
+;; Maintainer: Pan, Senshan <ss_pan@163.com>
 ;; Created: Mon  6 Sep 1993
-;; Updated: Tue 28 Apr 2015
-;; Version: 1.8
+;; Updated: Sun 8 Nov 2015
+;; Version: 1.9
 ;; Keywords: unix
 
 ;;; Commentary:
